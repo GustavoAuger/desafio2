@@ -1,6 +1,60 @@
-name: Deploy to EC2
+name: Despliegue en AWS EC2
 
 on:
   push:
     branches:
       - main
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # 1. Configurar la clave SSH para la conexión con la instancia
+    - name: Configurar clave SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+        chmod 400 ~/.ssh/id_rsa
+
+    # 2. Clonar el repositorio si aún no existe en la instancia EC2
+    - name: Clonar el repositorio si no existe
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+          if [ ! -d /home/${{ secrets.EC2_USER }}/app ]; then
+            git clone https://github.com/tu-usuario/tu-repositorio.git /home/${{ secrets.EC2_USER }}/app
+          fi
+        "
+
+    # 3. Instalar Python en la instancia EC2 si no está presente
+    - name: Instalar Python
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+          sudo apt-get update &&
+          sudo apt-get install -y python3 python3-pip
+        "
+
+    # 4. Instalar dependencias si el archivo requirements.txt cambió
+    - name: Instalar dependencias
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+          cd /home/${{ secrets.EC2_USER }}/app &&
+          git fetch &&
+          git diff --exit-code HEAD HEAD~1 requirements.txt || pip3 install --no-cache-dir -r requirements.txt
+        "
+
+    # 5. Actualizar la aplicación y reiniciarla
+    - name: Actualizar la aplicación
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+          cd /home/${{ secrets.EC2_USER }}/app &&
+          git pull &&
+          nohup python3 app.py &
+        "
+
+    # 6. Validar que la aplicación está activa
+    - name: Validar el despliegue
+      run: |
+        sleep 10
+        curl -f http://${{ secrets.EC2_IP }} || exit 1
