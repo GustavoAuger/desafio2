@@ -51,8 +51,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
             cd /home/${{ secrets.EC2_USER }}/app &&
-            git fetch &&
-            git diff --exit-code HEAD HEAD~1 requirements.txt || pip3 install --no-cache-dir -r requirements.txt
+            git pull &&
+            pip3 install --no-cache-dir -r requirements.txt
           "
 
       # 5. Actualizar la aplicación y reiniciarla
