@@ -18,12 +18,23 @@ jobs:
           chmod 400 ~/.ssh/id_rsa
 
 
-      # 2. Instalar Python y Git en la instancia EC2 si no están presentes
+      # 2. Instalar Python y Git en la instancia EC2 solo si no están presentes
       - name: Instalar Python y Git
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            sudo yum update -y &&
-            sudo yum install -y python3 python3-pip git
+            sudo yum update -y
+            if ! command -v python3 &> /dev/null; then
+              echo 'Python3 no está instalado, instalando...'
+              sudo yum install -y python3
+            else
+              echo 'Python3 ya está instalado'
+            fi
+            if ! command -v git &> /dev/null; then
+              echo 'Git no está instalado, instalando...'
+              sudo yum install -y git
+            else
+              echo 'Git ya está instalado'
+            fi
           "
           
       # 3. Clonar el repositorio si no existe en la instancia EC2
