@@ -74,4 +74,4 @@ jobs:
       - name: Validar el despliegue
         run: |
           sleep 10
-          curl -f http://${{ secrets.EC2_IP }} || exit 1
+          curl -f http://${{ secrets.EC2_IP }}:5000 || exit 1
