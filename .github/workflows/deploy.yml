@@ -61,10 +61,13 @@ jobs:
       - name: Reiniciar la aplicación
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+            echo 'Conectado a servidor...'
             cd /home/${{ secrets.EC2_USER }}/app && \
             source venv/bin/activate && \
+            echo 'Entorno virtual activado' && \
             nohup python3 app.py > app.log 2>&1 &
           "
+
 
 
       # 8. Validar el despliegue
