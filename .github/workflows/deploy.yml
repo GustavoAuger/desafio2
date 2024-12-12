@@ -68,5 +68,5 @@ jobs:
       # 8. Validar el despliegue
       - name: Validar el despliegue
         run: |
-          sleep 20
+          sleep 30
           curl -f http://3.80.215.36:5000 || exit 1
