@@ -46,14 +46,14 @@ jobs:
             fi
           "
 
-      # 4. Instalar dependencias si el archivo requirements.txt cambió
+      # 4. Instalar dependencias / con entorno virtual (se crea el enotorno por consola)
       - name: Instalar dependencias
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            cd /home/${{ secrets.EC2_USER }}/app &&
-            git pull &&
-            pip3 install --no-cache-dir -r requirements.txt
-          "
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+          cd /home/${{ secrets.EC2_USER }}/app &&
+          python3 -m venv venv &&
+          source venv/bin/activate &&
+          pip install --no-cache-dir -r requirements.txt
 
       # 5. Actualizar la aplicación y reiniciarla
       - name: Actualizar la aplicación
