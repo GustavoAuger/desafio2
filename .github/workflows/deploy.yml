@@ -50,8 +50,14 @@ jobs:
             python3 -m pip install --upgrade pip && \
             python3 -m pip install --no-cache-dir -r requirements.txt --break-system-packages
           "
+      # 6. Crear el archivo .env con las credenciales
+      - name: Configurar credenciales de MongoDB
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+            echo 'MONGO_URI=${{ secrets.MONGO_URI }}' > /home/${{ secrets.EC2_USER }}/app/.env
 
-      # 6. Reiniciar la aplicación
+
+      # 7. Reiniciar la aplicación
       - name: Reiniciar la aplicación
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
@@ -59,7 +65,7 @@ jobs:
             nohup /home/${{ secrets.EC2_USER }}/app/venv/bin/python3 /home/${{ secrets.EC2_USER }}/app/app.py &
           "
 
-      # 7. Validar el despliegue
+      # 8. Validar el despliegue
       - name: Validar el despliegue
         run: |
           sleep 10
