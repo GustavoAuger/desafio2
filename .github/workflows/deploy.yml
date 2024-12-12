@@ -61,12 +61,14 @@ jobs:
       - name: Reiniciar la aplicación
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            pkill -f app.py || true && \
-            nohup /home/${{ secrets.EC2_USER }}/app/venv/bin/python3 /home/${{ secrets.EC2_USER }}/app/app.py &
+            cd /home/${{ secrets.EC2_USER }}/app && \
+            source venv/bin/activate && \
+            nohup python3 app.py > app.log 2>&1 &
           "
+
 
       # 8. Validar el despliegue
       - name: Validar el despliegue
         run: |
-          sleep 30
+          sleep 15
           curl -f http://3.80.215.36:5000 || exit 1
