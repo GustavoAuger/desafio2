@@ -10,61 +10,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Configurar la clave SSH para la conexión con la instancia
+      # 1. Checkout del código del repositorio
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      # 2. Configurar la clave SSH para la conexión con la instancia
       - name: Configurar clave SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
 
-
-      # 2. Instalar Python y Git en la instancia EC2 solo si no están presentes
-      - name: Instalar Python y Git
+      # 3. Instalar dependencias en la instancia EC2
+      - name: Configurar Python y dependencias
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            sudo apt-get update -y
-            if ! command -v python3 &> /dev/null; then
-              echo 'Python3 no está instalado, instalando...'
-              sudo apt-get install -y python3 python3-pip
-            else
-              echo 'Python3 ya está instalado'
-            fi
-            if ! command -v git &> /dev/null; then
-              echo 'Git no está instalado, instalando...'
-              sudo apt-get install -y git
-            else
-              echo 'Git ya está instalado'
-            fi
+            sudo apt update && sudo apt upgrade -y && \
+            sudo apt install -y python3 python3-venv python3-pip git
           "
-          
-      # 3. Clonar el repositorio si no existe en la instancia EC2
-      - name: Clonar el repositorio si no existe
+
+      # 4. Clonar o actualizar el repositorio en la instancia EC2
+      - name: Clonar o actualizar el repositorio
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
             if [ ! -d /home/${{ secrets.EC2_USER }}/app ]; then
-              git clone https://github.com/GustavoAuger/desafio2 /home/${{ secrets.EC2_USER }}/app
+              git clone https://github.com/GustavoAuger/desafio2 /home/${{ secrets.EC2_USER }}/app;
+            else
+              cd /home/${{ secrets.EC2_USER }}/app && git pull;
             fi
           "
 
-      # 4. Instalar dependencias / con entorno virtual (se crea el enotorno por consola)
-      - name: Instalar dependencias
-        run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-          cd /home/${{ secrets.EC2_USER }}/app &&
-          python3 -m venv venv &&
-          source venv/bin/activate &&
-          pip install --no-cache-dir -r requirements.txt
-
-      # 5. Actualizar la aplicación y reiniciarla
-      - name: Actualizar la aplicación
+      # 5. Crear entorno virtual e instalar dependencias
+      - name: Crear entorno virtual e instalar dependencias
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
-            cd /home/${{ secrets.EC2_USER }}/app &&
-            git pull &&
-            nohup python3 app.py &
+            cd /home/${{ secrets.EC2_USER }}/app && \
+            python3 -m venv venv && \
+            source venv/bin/activate && \
+            python3 -m pip install --upgrade pip && \
+            python3 -m pip install --no-cache-dir -r requirements.txt --break-system-packages
           "
 
-      # 6. Validar que la aplicación está activa
+      # 6. Reiniciar la aplicación
+      - name: Reiniciar la aplicación
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
+            pkill -f app.py || true && \
+            nohup /home/${{ secrets.EC2_USER }}/app/venv/bin/python3 /home/${{ secrets.EC2_USER }}/app/app.py &
+          "
+
+      # 7. Validar el despliegue
       - name: Validar el despliegue
         run: |
           sleep 10
