@@ -20,3 +20,5 @@ def get_mongo_client():
 client = get_mongo_client()
 db = client['mi_base_datos']
 tareas_collection = db['tareas']
+
+
