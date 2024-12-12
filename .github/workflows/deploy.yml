@@ -55,8 +55,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_IP }} "
             echo 'MONGO_URI=${{ secrets.MONGO_URI }}' > /home/${{ secrets.EC2_USER }}/app/.env
-
-
+          "
+          
       # 7. Reiniciar la aplicación
       - name: Reiniciar la aplicación
         run: |
